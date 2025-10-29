@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpRequest, HttpResponse
+from typing import Dict, Any
 from django.views import View
 from .models import Room
 from .forms import *
@@ -234,10 +236,36 @@ class RoomDetailsView(View):
 
 
 class RoomsView(View):
-    def get(self,request):
-        #renders a list of rooms
-        rooms = Room.objects.all().values("name","room_type__name","id")
-        context = {
-            'rooms':rooms
+    """Vista responsable de listar las habitaciones y permitir filtrado dinámico por nombre.
+    
+    Esta vista soporta:
+      - Peticiones normales (renderiza template HTML con listado completo o filtrado).
+      - Peticiones AJAX (retorna JSON con habitaciones filtradas en tiempo real).
+    """
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        # 1. Lee el parámetro de búsqueda 'q' desde la query string y normaliza.
+        query = request.GET.get("q", "").strip()
+
+        # 2. Construye el queryset base: selecciona los campos que se mostrarán.
+        rooms = Room.objects.all().values("id", "name", "room_type__name")
+
+        # 3. Aplica el filtro si el usuario proporcionó texto de búsqueda.
+        if query:
+           
+            rooms = rooms.filter(name__icontains=query)  # name__icontains -> contiene la subcadena sin diferenciar mayúsculas/minúsculas
+
+        # 4. Ordena resultados por nombre.
+        rooms = rooms.order_by("name")
+
+        # 5. Si la petición es AJAX, devolver JSON con la lista de habitaciones.
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            rooms_list = list(rooms)
+            return JsonResponse({"rooms": rooms_list})
+
+        # 6. Para peticiones normales, renderizar el template y pasar context.
+        context: Dict[str, Any] = {
+            "rooms": rooms,  # en template puedes iterar: for r in rooms
+            "query": query,
         }
-        return render(request,"rooms.html",context)
+        return render(request, "rooms.html", context)
