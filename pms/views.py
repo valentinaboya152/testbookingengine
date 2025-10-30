@@ -236,36 +236,33 @@ class RoomDetailsView(View):
 
 
 class RoomsView(View):
-    """Vista responsable de listar las habitaciones y permitir filtrado dinámico por nombre.
-    
-    Esta vista soporta:
-      - Peticiones normales (renderiza template HTML con listado completo o filtrado).
-      - Peticiones AJAX (retorna JSON con habitaciones filtradas en tiempo real).
+    """View responsible for listing rooms and allowing dynamic filtering by name.
+    It supports:
+      - Normal requests (renders HTML template with complete or filtered list).
+      - AJAX requests (returns JSON with filtered rooms in real-time).
     """
-
     def get(self, request: HttpRequest) -> HttpResponse:
-        # 1. Lee el parámetro de búsqueda 'q' desde la query string y normaliza.
+        # 1. Get the search parameter 'q' from the query string and normalize it.
         query = request.GET.get("q", "").strip()
 
-        # 2. Construye el queryset base: selecciona los campos que se mostrarán.
+        # 2. Build the base queryset: select the fields to be displayed.
         rooms = Room.objects.all().values("id", "name", "room_type__name")
 
-        # 3. Aplica el filtro si el usuario proporcionó texto de búsqueda.
+        # 3. Apply the filter if the user provided a search query.
         if query:
-           
-            rooms = rooms.filter(name__icontains=query)  # name__icontains -> contiene la subcadena sin diferenciar mayúsculas/minúsculas
+            rooms = rooms.filter(name__icontains=query)  # name__icontains -> contains the substring without differentiating uppercase/lowercase
 
-        # 4. Ordena resultados por nombre.
+        # 4. Order results by name.
         rooms = rooms.order_by("name")
 
-        # 5. Si la petición es AJAX, devolver JSON con la lista de habitaciones.
+        # 5. If the request is AJAX, return JSON with the filtered list of rooms.
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             rooms_list = list(rooms)
             return JsonResponse({"rooms": rooms_list})
 
-        # 6. Para peticiones normales, renderizar el template y pasar context.
+        # 6. For normal requests, render the template and pass the context.
         context: Dict[str, Any] = {
-            "rooms": rooms,  # en template puedes iterar: for r in rooms
+            "rooms": rooms,  # You can iterate over rooms in the template: for r in rooms
             "query": query,
         }
         return render(request, "rooms.html", context)
