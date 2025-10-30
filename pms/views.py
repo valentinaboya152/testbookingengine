@@ -6,8 +6,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .form_dates import Ymd
 from .forms import *
-from .models import Room
+from .models import Room, Booking
 from .reservation_code import generate
+
 
 
 class BookingSearchView(View):
@@ -208,14 +209,25 @@ class DashboardView(View):
                     .exclude(state="DEL")
                     .aggregate(Sum('total'))
                     )
+         # Calculate occupancy rate
+        total_rooms = Room.objects.count()
+        confirmed_bookings = Booking.objects.filter(
+            Q(checkin__lte=today) &  # Check-in es hoy o antes
+            Q(checkout__gt=today) &   # Check-out es después de hoy
+            ~Q(state="DEL")           # No incluir reservas eliminadas
+        ).count()
+
+        occupancy_rate = (confirmed_bookings / total_rooms * 100) if total_rooms > 0 else 0
 
         # preparing context data
         dashboard = {
             'new_bookings': new_bookings,
             'incoming_guests': incoming,
             'outcoming_guests': outcoming,
-            'invoiced': invoiced
-
+            'invoiced': invoiced,
+            'occupancy_rate': round(occupancy_rate, 2),  # Redondear a 2 decimales
+            'total_rooms': total_rooms,
+            'occupied_rooms': confirmed_bookings
         }
 
         context = {
