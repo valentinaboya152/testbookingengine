@@ -145,6 +145,14 @@ class EditBookingDatesForm(forms.ModelForm):
             'checkin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), # date input
             'checkout': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), # date input
         }
+    def clean(self):
+        cleaned_data = super().clean()
+        checkin = cleaned_data.get("checkin")
+        checkout = cleaned_data.get("checkout")
+
+        if checkin and checkout and checkout <= checkin:
+            raise forms.ValidationError("La fecha de salida debe ser posterior a la fecha de entrada.")
+        return cleaned_data    
 class EditBookingDatesView(View):
     def get(self, request, pk):
         booking = get_object_or_404(Booking, pk=pk)
