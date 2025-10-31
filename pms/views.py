@@ -1,5 +1,6 @@
 from django.db.models import F, Q, Count, Sum
 from django.shortcuts import render, redirect
+from django.utils.decorators import method_decorator
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from typing import Dict, Any
 from django.views import View
@@ -7,7 +8,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .form_dates import Ymd
 from .forms import *
-from .models import Room
+from .models import Room, Booking
 from .reservation_code import generate
 
 
