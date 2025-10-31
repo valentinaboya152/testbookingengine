@@ -4,7 +4,7 @@
 <h1>Dashboard</h1>
 <div class="card">
     <h5 class="card-header">Hoy</h5>
-    <div class="d-flex justify-content-evenly pt-5 pb-5">
+    <div class="d-flex justify-content-evenly pt-5 pb-5 gap-4 px-4">
         <div class="card text-white p-3 card-customization" style="background-color: #1000ff;">
             <h5 class="small">Reservas hechas</h5>
             <h1 class="dashboard-value">{{dashboard.new_bookings}}</h1>
@@ -21,6 +21,13 @@
         <div class="card text-white p-3 card-customization" style="background-color: #ff7f7f;">
             <h5 class="small">Total facturado</h5>
             <h1 class="dashboard-value">€ {% if dashboard.invoiced.total__sum == None %}0.00{% endif %} {{dashboard.invoiced.total__sum|floatformat:2}}</h1>
+        </div>
+        <div class="card text-white p-3 card-customization " style="background-color:rgb(70, 150, 187);">
+            <h5 class="small">% Ocupación</h5>
+            <h1 class="dashboard-value">{{ dashboard.occupancy_rate }}%</h1>
+            <p class="text-white mb-0">
+                {{ dashboard.occupied_rooms }} de {{ dashboard.total_rooms }} habitaciones ocupadas
+            </p>
         </div>
     </div>
 </div>
