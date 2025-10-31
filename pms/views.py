@@ -1,5 +1,7 @@
 from django.db.models import F, Q, Count, Sum
 from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpRequest, HttpResponse
+from typing import Dict, Any
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -236,10 +238,33 @@ class RoomDetailsView(View):
 
 
 class RoomsView(View):
-    def get(self,request):
-        #renders a list of rooms
-        rooms = Room.objects.all().values("name","room_type__name","id")
-        context = {
-            'rooms':rooms
+    """View responsible for listing rooms and allowing dynamic filtering by name.
+    It supports:
+      - Normal requests (renders HTML template with complete or filtered list).
+      - AJAX requests (returns JSON with filtered rooms in real-time).
+    """
+    def get(self, request: HttpRequest) -> HttpResponse:
+        # 1. Get the search parameter 'q' from the query string and normalize it.
+        query = request.GET.get("q", "").strip()
+
+        # 2. Build the base queryset: select the fields to be displayed.
+        rooms = Room.objects.all().values("id", "name", "room_type__name")
+
+        # 3. Apply the filter if the user provided a search query.
+        if query:
+            rooms = rooms.filter(name__icontains=query)  # name__icontains -> contains the substring without differentiating uppercase/lowercase
+
+        # 4. Order results by name.
+        rooms = rooms.order_by("name")
+
+        # 5. If the request is AJAX, return JSON with the filtered list of rooms.
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            rooms_list = list(rooms)
+            return JsonResponse({"rooms": rooms_list})
+
+        # 6. For normal requests, render the template and pass the context.
+        context: Dict[str, Any] = {
+            "rooms": rooms,  # You can iterate over rooms in the template: for r in rooms
+            "query": query,
         }
-        return render(request,"rooms.html",context)
+        return render(request, "rooms.html", context)

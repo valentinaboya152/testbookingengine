@@ -2,7 +2,6 @@
 
 {% block content %}
 <h1>Habitaciones del hotel</h1>
-
 <!-- Search form -->
 <form id="room-search-form" class="mb-4">
     <input 
@@ -27,6 +26,7 @@ This div is filled dynamically with the search results -->
             </div>
         </div>
     </div>
+
     {% empty %}
     <p>No hay habitaciones disponibles.</p>
     {% endfor %}
@@ -82,3 +82,4 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 {% endblock content %}
+
