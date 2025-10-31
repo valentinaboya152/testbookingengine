@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Habitaciones del hotel</h1>
 
-<!-- Formulario de búsqueda -->
+<!-- Search form -->
 <form id="room-search-form" class="mb-4">
     <input 
         type="text" 
@@ -15,34 +15,41 @@
     />
 </form>
 
-<!-- Contenedor donde se renderizan las habitaciones -->
+<!-- Container where rooms are rendered
+This div is filled dynamically with the search results -->
+
 <div id="rooms-container">
     {% for room in rooms %}
     <div class="room-card row card mt-3 mb-3 hover-card bg-tr-250">
         <div class="col p-3">
             <div>{{ room.name }} ({{ room.room_type__name }})</div>
             <div>
-                <a href="{% url 'room_details' pk=room.id %}">Ver detalles</a>
+
+                <a href="{% url 'room_details' pk=room.id %}" class="btn btn-link p-0">Ver detalles</a>
             </div>
         </div>
     </div>
+
+
     {% empty %}
     <p>No hay habitaciones disponibles.</p>
     {% endfor %}
 </div>
 
-<!-- Script con AJAX -->
+
+<!-- AJAX script    
+This script allows to search rooms in real time-->
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("search-input");
     const roomsContainer = document.getElementById("rooms-container");
+    const initialRoomsHTML = roomsContainer.innerHTML; //Stores the initial content (to restore it if there is no search)
 
-    // Guardamos el contenido inicial (para restaurarlo si no hay búsqueda)
-    const initialRoomsHTML = roomsContainer.innerHTML;
-
-    // Función para buscar habitaciones por AJAX
+    // Function to search rooms by AJAX
     const fetchRooms = async (query) => {
-        // Si no hay texto, restaurar listado original
+        // If there is no search, restore the original list
+
         if (!query) {
             roomsContainer.innerHTML = initialRoomsHTML;
             return;
@@ -55,13 +62,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const data = await response.json();
 
-            // Renderizar resultados
+            // Clear and render
+
             roomsContainer.innerHTML = data.rooms.length
                 ? data.rooms.map(room => `
                     <div class="room-card row card mt-3 mb-3 hover-card bg-tr-250">
                         <div class="col p-3">
                             <div>${room.name} (${room.room_type__name})</div>
-                            <div><a href="/room/${room.id}/">Ver detalles</a></div>
+                            <div><a href="/room/${room.id}/" class="btn btn-link p-0">Ver detalles</a></div>
+
                         </div>
                     </div>
                 `).join("")
@@ -73,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Escuchar el evento input para búsqueda en tiempo real
+    // Listen to the input event for real-time search
     searchInput.addEventListener("input", (e) => {
         fetchRooms(e.target.value.trim());
     });

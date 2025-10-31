@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> feature/02-dashboard-occupancy
 chapp/__pycache__/**
 
 # Python
@@ -19,18 +15,23 @@ media/
 
 # VSCode / IDEs
 .vscode/
-<<<<<<< HEAD
+
 .idea/
 
 # Docker
 *.env
-=======
-*/__pycache__/**
-.idea/
->>>>>>> 34e21f3b96c1e22ee961526b94d87b9c837e3591
-=======
-.idea/
 
-# Docker
-*.env
->>>>>>> feature/02-dashboard-occupancy
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
