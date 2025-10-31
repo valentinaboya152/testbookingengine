@@ -1,19 +1,84 @@
-{% extends "main.html"%}
+{% extends "main.html" %}
 
 {% block content %}
 <h1>Habitaciones del hotel</h1>
-{% for room in rooms%}
-<div class="row card mt-3 mb-3 hover-card bg-tr-250">
-    <div class="col p-3">
-        <div class="">
-            {{room.name}} ({{room.room_type__name}})
+
+<!-- Formulario de búsqueda -->
+<form id="room-search-form" class="mb-4">
+    <input 
+        type="text" 
+        id="search-input" 
+        name="q" 
+        placeholder="Buscar habitación por nombre..." 
+        class="form-control"
+        autocomplete="off"
+    />
+</form>
+
+<!-- Contenedor donde se renderizan las habitaciones -->
+<div id="rooms-container">
+    {% for room in rooms %}
+    <div class="room-card row card mt-3 mb-3 hover-card bg-tr-250">
+        <div class="col p-3">
+            <div>{{ room.name }} ({{ room.room_type__name }})</div>
+            <div>
+                <a href="{% url 'room_details' pk=room.id %}">Ver detalles</a>
+            </div>
         </div>
-        <div>
-            <a href="{% url 'room_details' pk=room.id%}">Ver detalles</a>
-        </div>
-        
     </div>
-    
+    {% empty %}
+    <p>No hay habitaciones disponibles.</p>
+    {% endfor %}
 </div>
-{% endfor %}
-{% endblock content%}
+
+<!-- Script con AJAX -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("search-input");
+    const roomsContainer = document.getElementById("rooms-container");
+
+    // Guardamos el contenido inicial (para restaurarlo si no hay búsqueda)
+    const initialRoomsHTML = roomsContainer.innerHTML;
+
+    // Función para buscar habitaciones por AJAX
+    const fetchRooms = async (query) => {
+        // Si no hay texto, restaurar listado original
+        if (!query) {
+            roomsContainer.innerHTML = initialRoomsHTML;
+            return;
+        }
+
+        try {
+            const response = await fetch(`{% url 'rooms' %}?q=${encodeURIComponent(query)}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+
+            const data = await response.json();
+
+            // Renderizar resultados
+            roomsContainer.innerHTML = data.rooms.length
+                ? data.rooms.map(room => `
+                    <div class="room-card row card mt-3 mb-3 hover-card bg-tr-250">
+                        <div class="col p-3">
+                            <div>${room.name} (${room.room_type__name})</div>
+                            <div><a href="/room/${room.id}/">Ver detalles</a></div>
+                        </div>
+                    </div>
+                `).join("")
+                : "<p>No hay habitaciones que coincidan con la búsqueda.</p>";
+
+        } catch (error) {
+            console.error("Error al buscar habitaciones:", error);
+            roomsContainer.innerHTML = "<p class='text-danger'>Error al cargar las habitaciones.</p>";
+        }
+    };
+
+    // Escuchar el evento input para búsqueda en tiempo real
+    searchInput.addEventListener("input", (e) => {
+        fetchRooms(e.target.value.trim());
+    });
+});
+</script>
+
+{% endblock content %}
+
