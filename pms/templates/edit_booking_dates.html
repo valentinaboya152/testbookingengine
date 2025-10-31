@@ -1,0 +1,77 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 500px;">
+    <h2>Editar Fechas de la Reserva #{{ booking.id }}</h2>
+    <div class="mx-auto" style="max-width: 250px;">
+        <form method="post" class="mt-4" id="dateForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.checkin.id_for_label }}">Fecha de Entrada:</label>
+                {{ form.checkin }}
+                {% if form.checkin.errors %}
+                    <div class="alert alert-danger">{{ form.checkin.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group mt-3">
+                <label for="{{ form.checkout.id_for_label }}">Fecha de Salida:</label>
+                {{ form.checkout }}
+                {% if form.checkout.errors %}
+                    <div class="alert alert-danger">{{ form.checkout.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">Guardar Cambios</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Validation on the client side
+function updateMinCheckoutDate() {
+    const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
+    const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
+    const errorDiv = document.getElementById('date-error');
+    
+    if (checkin.value) {
+        checkout.min = checkin.value;
+        if (checkout.value) {
+            if (new Date(checkout.value) <= new Date(checkin.value)) {
+                errorDiv.textContent = 'La fecha de salida debe ser posterior a la fecha de entrada.';
+                errorDiv.style.display = 'block';
+                return false;
+            } else {
+                errorDiv.style.display = 'none';
+            }
+        }
+    }
+    return true;
+}
+
+// Initialize validation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
+    const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
+    const form = document.getElementById('dateForm');
+    
+    // Create element to display error
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'date-error';
+    errorDiv.className = 'alert alert-danger mt-2';
+    errorDiv.style.display = 'none';
+    checkout.parentNode.insertBefore(errorDiv, checkout.nextSibling);
+
+    // Validate when the check-in date changes
+    checkin.addEventListener('change', updateMinCheckoutDate);
+    
+    // Validate when the check-out date changes
+    checkout.addEventListener('change', updateMinCheckoutDate);
+    
+    // Validar antes de enviar el formulario
+    form.addEventListener('submit', function(e) {
+        if (!updateMinCheckoutDate()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,13 +1,15 @@
 from django.db.models import F, Q, Count, Sum
 from django.shortcuts import render, redirect
-from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import ensure_csrf_cookie
-
-from .form_dates import Ymd
-from .forms import *
 from .models import Room
+from .forms import *
+from .form_dates import Ymd
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
 from .reservation_code import generate
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 
 
 class BookingSearchView(View):
@@ -135,7 +137,51 @@ class BookingView(View):
         }
         return render(request, "booking.html", context)
 
+class EditBookingDatesForm(forms.ModelForm):
+    class Meta:
+        model = Booking
+        fields = ['checkin', 'checkout']
+        widgets = {
+            'checkin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), # date input
+            'checkout': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), # date input
+        }
+    def clean(self):
+        cleaned_data = super().clean()
+        checkin = cleaned_data.get("checkin")
+        checkout = cleaned_data.get("checkout")
 
+        if checkin and checkout and checkout <= checkin:
+            raise forms.ValidationError("La fecha de salida debe ser posterior a la fecha de entrada.")
+        return cleaned_data    
+class EditBookingDatesView(View):
+    def get(self, request, pk):
+        booking = get_object_or_404(Booking, pk=pk)
+        form = EditBookingDatesForm(instance=booking) # edit booking dates form
+        return render(request, 'edit_booking_dates.html', {'form': form, 'booking': booking}) # render edit booking dates form
+
+    def post(self, request, pk):
+        booking = get_object_or_404(Booking, pk=pk)
+        form = EditBookingDatesForm(request.POST, instance=booking)
+        if form.is_valid():
+            # Check availability
+            checkin = form.cleaned_data['checkin']
+            checkout = form.cleaned_data['checkout']
+            
+            # Check if there are other bookings on the same dates for the same room
+            conflicting_bookings = Booking.objects.filter(
+                room=booking.room,
+                checkin__lt=checkout,
+                checkout__gt=checkin,
+            ).exclude(pk=booking.pk) # Exclude the current booking
+
+            if conflicting_bookings.exists():
+                messages.error(request, "No hay disponibilidad para las fechas seleccionadas.")
+            else:
+                form.save()
+                messages.success(request, "Las fechas de la reserva han sido actualizadas correctamente.")
+                return redirect('home')
+        
+        return render(request, 'edit_booking_dates.html', {'form': form, 'booking': booking})
 class DeleteBookingView(View):
     # renders the booking deletion form
     def get(self, request, pk):
