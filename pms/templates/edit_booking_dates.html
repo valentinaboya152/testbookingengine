@@ -26,28 +26,50 @@
 </div>
 
 <script>
-// Validación en el cliente
+// Validation on the client side
 function updateMinCheckoutDate() {
     const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
     const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
+    const errorDiv = document.getElementById('date-error');
+    
     if (checkin.value) {
         checkout.min = checkin.value;
-        if (checkout.value && new Date(checkout.value) <= new Date(checkin.value)) {
-            checkout.value = '';
+        if (checkout.value) {
+            if (new Date(checkout.value) <= new Date(checkin.value)) {
+                errorDiv.textContent = 'La fecha de salida debe ser posterior a la fecha de entrada.';
+                errorDiv.style.display = 'block';
+                return false;
+            } else {
+                errorDiv.style.display = 'none';
+            }
         }
     }
+    return true;
 }
 
-// Inicializar validación al cargar la página
+// Initialize validation on page load
 document.addEventListener('DOMContentLoaded', function() {
+    const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
+    const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
     const form = document.getElementById('dateForm');
+    
+    // Create element to display error
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'date-error';
+    errorDiv.className = 'alert alert-danger mt-2';
+    errorDiv.style.display = 'none';
+    checkout.parentNode.insertBefore(errorDiv, checkout.nextSibling);
+
+    // Validate when the check-in date changes
+    checkin.addEventListener('change', updateMinCheckoutDate);
+    
+    // Validate when the check-out date changes
+    checkout.addEventListener('change', updateMinCheckoutDate);
+    
+    // Validar antes de enviar el formulario
     form.addEventListener('submit', function(e) {
-        const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
-        const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
-        
-        if (checkin.value && checkout.value && new Date(checkout.value) <= new Date(checkin.value)) {
+        if (!updateMinCheckoutDate()) {
             e.preventDefault();
-            alert('La fecha de salida debe ser posterior a la fecha de entrada.');
         }
     });
 });
