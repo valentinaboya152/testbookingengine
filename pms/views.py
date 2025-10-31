@@ -10,7 +10,8 @@ from .form_dates import Ymd
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .reservation_code import generate
 from django.contrib import messages
-
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 class BookingSearchView(View):
@@ -183,6 +184,39 @@ class EditBookingDatesView(View):
                 return redirect('home')
         
         return render(request, 'edit_booking_dates.html', {'form': form, 'booking': booking})
+
+@csrf_exempt  # permite llamadas AJAX sin token CSRF si lo pruebas directamente
+def check_booking_availability(request, pk):
+    """
+    Endpoint AJAX para validar disponibilidad de la habitación al cambiar fechas en el formulario.
+    """
+    if request.method == "POST":
+        booking = get_object_or_404(Booking, pk=pk)
+        checkin = request.POST.get('checkin')
+        checkout = request.POST.get('checkout')
+
+        if not checkin or not checkout:
+            return JsonResponse({'available': False, 'error': 'Debes seleccionar ambas fechas.'})
+
+        from datetime import datetime
+        checkin_date = datetime.strptime(checkin, "%Y-%m-%d").date()
+        checkout_date = datetime.strptime(checkout, "%Y-%m-%d").date()
+
+        if checkout_date <= checkin_date:
+            return JsonResponse({'available': False, 'error': 'La fecha de salida debe ser posterior a la de entrada.'})
+
+        conflicting = Booking.objects.filter(
+            room=booking.room,
+            checkin__lt=checkout_date,
+            checkout__gt=checkin_date
+        ).exclude(pk=booking.pk)
+
+        if conflicting.exists():
+            return JsonResponse({'available': False, 'error': 'No hay disponibilidad para las fechas seleccionadas.'})
+        else:
+            return JsonResponse({'available': True})
+
+        return JsonResponse({'available': False, 'error': 'Método no permitido.'})
 class DeleteBookingView(View):
     # renders the booking deletion form
     def get(self, request, pk):
