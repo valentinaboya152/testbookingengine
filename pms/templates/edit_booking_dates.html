@@ -1,0 +1,55 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 500px;">
+    <h2>Editar Fechas de la Reserva #{{ booking.id }}</h2>
+    <div class="mx-auto" style="max-width: 250px;">
+        <form method="post" class="mt-4" id="dateForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.checkin.id_for_label }}">Fecha de Entrada:</label>
+                {{ form.checkin }}
+                {% if form.checkin.errors %}
+                    <div class="alert alert-danger">{{ form.checkin.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group mt-3">
+                <label for="{{ form.checkout.id_for_label }}">Fecha de Salida:</label>
+                {{ form.checkout }}
+                {% if form.checkout.errors %}
+                    <div class="alert alert-danger">{{ form.checkout.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">Guardar Cambios</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Validación en el cliente
+function updateMinCheckoutDate() {
+    const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
+    const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
+    if (checkin.value) {
+        checkout.min = checkin.value;
+        if (checkout.value && new Date(checkout.value) <= new Date(checkin.value)) {
+            checkout.value = '';
+        }
+    }
+}
+
+// Inicializar validación al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('dateForm');
+    form.addEventListener('submit', function(e) {
+        const checkin = document.getElementById('{{ form.checkin.id_for_label }}');
+        const checkout = document.getElementById('{{ form.checkout.id_for_label }}');
+        
+        if (checkin.value && checkout.value && new Date(checkout.value) <= new Date(checkin.value)) {
+            e.preventDefault();
+            alert('La fecha de salida debe ser posterior a la fecha de entrada.');
+        }
+    });
+});
+</script>
+{% endblock %}
