@@ -1,2 +1,21 @@
-*/__pycache__/**
+chapp/__pycache__/**
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Django
+*.log
+staticfiles/
+media/
+
+# VSCode / IDEs
+.vscode/
 .idea/
+
+# Docker
+*.env
