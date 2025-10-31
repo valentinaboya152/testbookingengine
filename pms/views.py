@@ -1,16 +1,5 @@
 from django.db.models import F, Q, Count, Sum
 from django.shortcuts import render, redirect
-<<<<<<< HEAD
-from django.http import JsonResponse, HttpRequest, HttpResponse
-from typing import Dict, Any
-from django.views import View
-from .models import Room
-from .forms import *
-from django.db.models import F,Q, Count, Sum
-from .form_dates import Ymd
-from django.views.decorators.csrf import ensure_csrf_cookie
-=======
->>>>>>> 34e21f3b96c1e22ee961526b94d87b9c837e3591
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
